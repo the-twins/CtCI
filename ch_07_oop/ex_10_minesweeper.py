@@ -1,14 +1,7 @@
 class PlayingField:
     
     def __init__(self, row, col, bomb):
-        mark = False
-        if row not in (9, 16):
-            mark = True
-        elif col not in (9, 16, 30):
-            mark = True
-        elif bomb not in (10, 40, 99):
-            mark = True
-        if mark == True:
+        if row not in (9, 16) or col not in (9, 16, 30) or bomb not in (10, 40, 99):
             raise ValueError('Invalid value')
         else:
             self.row = row
@@ -46,52 +39,100 @@ class PlayingField:
                 else:
                     print('?', end='')
             print()
+    
+    def make_field(self):
+        for i in range(self.row):
+            for j in range(self.col):
+                self.field[i][j] = Square()   
+        BOMB = 9
+        numbers_bomb = self.bomb
+        bomb_row = random.sample(range(0, self.row), numbers_bomb)
+        bomb_col = random.sample(range(0, self.col), numbers_bomb)
+        for i, j in bomb_row, bomb_col:
+            self.field[i][j] = Square.bomb()
+        all_bomb = 0 
+        for i in range(self.row):
+            for j in range(self.col):
+                if self.field[i][j] == BOMB:
+                        continue
+                if i > 0:
+                    if self.field[i - 1][j] == BOMB:
+                        all_bomb += 1
+                if j > 0:
+                    if self.field[i][j - 1] == BOMB:
+                        all_bomb += 1
+                if i not self.row - 1:
+                    if self.field[i + 1][j] == BOMB:
+                        all_bomb += 1
+                if j not self.col - 1:
+                    if self.field[i][j + 1] == BOMB:
+                        all_bomb += 1
+                if all_bomb > 0:
+                    self.field[i][j] = all_bomb
+                else:
+                    self.field[i][j] = 0                  
+            all_bomb = 0
+        
+    
 
-
-class Square(PlayingField):
+class Square:
+    FLAG = 1
+    OPEN = 2
+    CLOSE = 3
+    BOMB = 9
         
-        def __init__(self, row, col, bomb):
-            PlayingField.__init__(self, row, col, bomb)
-            for i in range(self.row):
-                for j in range(self.col):
-                    self.board[i][j] = None
-        
-        def seed_bombs(self):
-            BOMB = 9
-            numbers_bomb = self.bomb
-            while is numbers_bomb:
-                self.board[random.randint(0, self.row)][random.randint(0, self.col)] = BOMB
-                numbers_bomb -= 1
-        
-        def init_square(self):
-            all_bomb = 0 
-            for i in range(self.row):
-                for j in range(self.col):
-                    if self.board[i][j] == BOMB:
-                            continue
-                    if i > 0:
-                        if self.board[i - 1][j] == BOMB:
-                            all_bomb += 1
-                    if j > 0:
-                        if self.board[i][j - 1] == BOMB:
-                            all_bomb += 1
-                    if i not self.row - 1:
-                        if self.board[i + 1][j] == BOMB:
-                            all_bomb += 1
-                    if j not self.col - 1:
-                        if self.board[i][j + 1] == BOMB:
-                            all_bomb += 1
-                    if all_bomb > 0:
-                        self.board[i][j] = all_bomb
-                    else:
-                        self.board[i][j] = 0                  
-                all_bomb = 0
-                            
+    def __init__(self, value: int = 0):
+        self.state = CLOSE 
+        self.value = value
             
+    def open(self):
+        if self.state == FLAG:
+            return False
+        self.state = OPEN
+        return True
+    
+    def set_flag(self):
+        if self.state == OPEN:
+            return False        
+        self.state = FLAG
+        return True
+        
+    def bomb(self):
+        self.value = BOMB
+        return True
+        
+    def draw_square(self):
+        if self.state == OPEN:
+            if self.value == BOMB:
+                print('💣')
+            elif self.value == FLAG:
+                print('🚩')
 
 
 if __name__ == '__main__':
     random.seed()
+    print('Select level:')
+    print('a) Beginner(9x9 field, 10 bombs')
+    print('b) Amateur(16x16 field, 40 bombs')
+    print('c) Professional(16x30 field, 99 bombs')
+    choice = input()
+    while is choice:
+        if choice == a:
+            field = PlayingField(9, 9, 10)
+            break
+        elif choice == b:
+            field = PlayingField(16, 16, 40)
+            break
+        elif choice == c:
+            field = PlayingField(16, 30, 99)
+            break
+        else:
+            print('Invalid value. Try again:')
+            choice = input()
+    row = int(input('Enter a row: '))
+    col = int(input('Enter a column: '))
+    act = int(input('Select an action: open(press 1), set flag(press 2)'))
+        
     x = PlayingField(12, 16, 40)
     x.draw_field()
                 
