@@ -1,5 +1,24 @@
+""" Minesweeper: Design and implement a text-based Minesweeper game. Minesweeper is the classic
+single-player computer game where an NxN grid has B mines (or bombs) hidden across the grid. The
+remaining cells are either blank or have a number behind them. The numbers reflect the number of
+bombs in the surrounding eight cells. The user then uncovers a cell. If it is a bomb, the player 
+loses. If it is a number, the number is exposed. If it is a blank cell, this cell and all adjacent
+blank cells (up to and including the surrounding numeric cells) are exposed. The player wins when 
+all non-bomb cells are exposed. The player can also flag certain places as potential bombs. This 
+doesn't affect game play, other than to block the user from accidentally clicking a cell that is 
+thought to have a bomb. (Tip for the reader: if you're not familiar with this game, please play a 
+few rounds on line first.)"""
+
+
 import random
 import sys
+from collections import deque
+
+
+FLAG = 1
+OPEN = 2
+CLOSE = 3
+BOMB = 9
 
 
 class PlayingField:
@@ -35,7 +54,6 @@ class PlayingField:
             print()
     
     def make_field(self):
-        BOMB = 9
         coordinates = []
         bomb_list = []
         for i in range(self.row):
@@ -71,109 +89,96 @@ class PlayingField:
                         self.field[i][j].value += 1
             
     def play(self):
-        BOMB = 9
-        OPEN = 2
-        FLAG = 1
-        try:
-            row = int(input('Enter a row: '))
-            col = int(input('Enter a column: '))
-            act = int(input('Select an action: open(press 1), set flag(press 2), remove flag(press'
-                            ' 3), quit(press q): '))
-            while True:            
-                if row >= 0 and row <= self.row and  col >= 0 and col <= self.col and act in (1, 2, 3, 4):
-                    if act == 1:
-                        self.field[row - 1][col - 1].open()
-                        self.check_open_square()
-                        if self.field[row - 1][col - 1].value != 0:
-                            self.draw_field()
-                        if self.field[row - 1][col - 1].value == BOMB:
-                            print('\nBOMB! Game over!\n')
-                            for i in range(self.row):
-                                for j in range(self.col):
-                                    if self.field[i][j].value == BOMB:
-                                        self.field[i][j].open()
-                            self.draw_field()
-                            sys.exit(1)
-                        if self.field[row - 1][col - 1].value == 0:
-                            self.open_square(row - 1, col - 1)                            
-                    elif act == 2:
-                        self.field[row - 1][col - 1].set_flag()
-                        self.check_open_square()
-                        self.draw_field()
-                    elif act == 3:
-                        self.field[row - 1][col - 1].remove_flag()
-                        self.draw_field()
-                    elif act == 4:
-                        for i in range(self.row - 1):
-                            for j in range(self.col):
-                                if self.field[i][j].value != BOMB:
-                                        self.field[i][j].open()
-                        self.draw_field()
-                    else:
-                        print('Input error. Try again.') 
-                row = int(input('Enter a row: '))
+        row, col, act = self.get_option()
+        while True:            
+            if act == 1:
+                self.field[row - 1][col - 1].open()
+                self.check_open_square()
+                if self.field[row - 1][col - 1].value != 0:
+                    self.draw_field()
+                if self.field[row - 1][col - 1].value == BOMB:
+                    print('\nBOMB! Game over!\n')
+                    for i in range(self.row):
+                        for j in range(self.col):
+                            if self.field[i][j].value == BOMB:
+                                self.field[i][j].open()
+                    self.draw_field()
+                    sys.exit(1)
+                if self.field[row - 1][col - 1].value == 0:
+                    self.open_square(row - 1, col - 1)                            
+            elif act == 2:
+                self.field[row - 1][col - 1].set_flag()
+                self.check_open_square()
+                self.draw_field()
+            elif act == 3:
+                self.field[row - 1][col - 1].remove_flag()
+                self.draw_field()
+            elif act == 4:
+                for i in range(self.row - 1):
+                    for j in range(self.col):
+                        if self.field[i][j].value != BOMB:
+                                self.field[i][j].open()
+                self.draw_field()
+            row, col, act = self.get_option()
+                
+    def get_option(self):
+        while True:
+            try:
+                row = int(input('\nEnter a row: '))
                 col = int(input('Enter a column: '))
-                act = int(input('Select an action: open(press 1), set flag(press 2), remove flag' 
-                                 '(press 3), quit(press q): '))
-        except ValueError:
-            print('Bye!')
-            sys.exit(1)            
+                act = int(input('Select an action: open(press 1), set flag(press 2), remove flag '
+                            '(press 3), quit(press q): '))
+            except ValueError:
+                print('Bye!')
+                sys.exit(1)  
+            if row >= 0 and row <= self.row and col >= 0 and col <= self.col and act in (1, 2, 3, 4):
+                return (row, col, act)
+            else:
+                print('Input error. Try again.')                
          
     def open_square(self, row, col):
-        from collections import deque
-        
         queue = deque()
-        BOMB = 9
-        CLOSE = 3
         while True:
             if row > 0:
                 if col > 0:
-                    if(self.field[row - 1][col - 1].value != BOMB and 
-                       self.field[row - 1][col - 1].state == CLOSE):
-                        if self.field[row - 1][col - 1].value == 0:
-                            queue.append((row - 1, col - 1))
-                        self.field[row - 1][col - 1].open()
-                    if(self.field[row - 1][col].value != BOMB and 
-                       self.field[row - 1][col].state == CLOSE):
-                        if self.field[row - 1][col].value == 0:   
-                            queue.append((row - 1, col))
-                        self.field[row - 1][col].open()
+                    if(self.field[row - 1][col - 1].state == CLOSE and
+                       self.field[row - 1][col - 1].value == 0):
+                        queue.append((row - 1, col - 1))
+                    self.field[row - 1][col - 1].open()
+                    if(self.field[row - 1][col].state == CLOSE and 
+                       self.field[row - 1][col].value == 0): 
+                        queue.append((row - 1, col))
+                    self.field[row - 1][col].open()
             if col > 0:
-                if(self.field[row][col - 1].value != BOMB and
-                   self.field[row][col - 1].state == CLOSE):
-                    if self.field[row][col - 1].value == 0:
-                        queue.append((row, col - 1))
-                    self.field[row][col - 1].open()
+                if(self.field[row][col - 1].state == CLOSE and
+                   self.field[row][col - 1].value == 0):
+                    queue.append((row, col - 1))
+                self.field[row][col - 1].open()
             if row != self.row - 1:
                 if col > 0:
-                    if(self.field[row + 1][col - 1].value != BOMB and 
-                       self.field[row + 1][col - 1].state == CLOSE): 
-                        if self.field[row + 1][col - 1].value == 0:                           
-                            queue.append((row + 1, col - 1))
-                        self.field[row + 1][col - 1].open()
+                    if(self.field[row + 1][col - 1].state == CLOSE and
+                       self.field[row + 1][col - 1].value == 0):                         
+                        queue.append((row + 1, col - 1))
+                    self.field[row + 1][col - 1].open()
                 if col != self.col - 1:
-                    if(self.field[row + 1][col + 1].value != BOMB and
-                       self.field[row + 1][col + 1].state == CLOSE):
-                        if self.field[row + 1][col + 1].value == 0:
-                            queue.append((row + 1, col + 1))
-                        self.field[row + 1][col + 1].open()
-                    if(self.field[row + 1][col].value != BOMB and
-                       self.field[row + 1][col].state == CLOSE):
-                        if self.field[row + 1][col].value == 0:
-                            queue.append((row + 1, col))
-                        self.field[row + 1][col].open()
+                    if(self.field[row + 1][col + 1].state == CLOSE and
+                       self.field[row + 1][col + 1].value == 0):
+                        queue.append((row + 1, col + 1))
+                    self.field[row + 1][col + 1].open()
+                    if(self.field[row + 1][col].state == CLOSE and 
+                       self.field[row + 1][col].value == 0):
+                        queue.append((row + 1, col))
+                    self.field[row + 1][col].open()
             if col != self.col - 1:
                 if row > 0:
-                    if(self.field[row - 1][col + 1].value != BOMB and
-                       self.field[row - 1][col + 1].state == CLOSE):
-                        if self.field[row - 1][col + 1].value == 0:
-                            queue.append((row - 1, col + 1))
-                        self.field[row - 1][col + 1].open()
-                if(self.field[row][col + 1].value != BOMB and
-                   self.field[row][col + 1].state == CLOSE):
-                    if self.field[row][col + 1].value == 0:
-                        queue.append((row, col + 1))
-                    self.field[row][col + 1].open()
+                    if(self.field[row - 1][col + 1].state == CLOSE and
+                       self.field[row - 1][col + 1].value == 0):
+                        queue.append((row - 1, col + 1))
+                    self.field[row - 1][col + 1].open()
+                if(self.field[row][col + 1].state == CLOSE and 
+                   self.field[row][col + 1].value == 0):
+                    queue.append((row, col + 1))
+                self.field[row][col + 1].open()
             if not queue:
                 break
             else:
@@ -182,8 +187,6 @@ class PlayingField:
         self.check_open_square()
         
     def check_open_square(self):
-        OPEN = 2
-        FLAG = 1
         count = 0
         for i in range(self.row):
             for j in range(self.col):
@@ -201,46 +204,42 @@ class PlayingField:
         
                 
 class Square:
-    FLAG = 1
-    OPEN = 2
-    CLOSE = 3
-    BOMB = 9
         
     def __init__(self, value: int = 0):
-        self.state = self.CLOSE 
+        self.state = CLOSE 
         self.value = value
             
     def open(self):
-        if self.state == self.FLAG:
+        if self.state == FLAG:
             return False
-        self.state = self.OPEN
+        self.state = OPEN
         return True
     
     def set_flag(self):
-        if self.state == self.OPEN:
+        if self.state == OPEN:
             return False        
-        self.state = self.FLAG
+        self.state = FLAG
         return True
         
     def remove_flag(self):
-        if self.state == self.OPEN:
+        if self.state == OPEN:
             return False 
-        if self.state == self.FLAG:
-            self.state = self.CLOSE 
+        if self.state == FLAG:
+            self.state = CLOSE 
             return True       
         
     def bomb(self):
-        self.value = self.BOMB
+        self.value = BOMB
         return True
         
     def draw(self):
-        if self.state == self.OPEN:
-            if self.value == self.BOMB:
+        if self.state == OPEN:
+            if self.value == BOMB:
                 print('*', end='')
             else:
                 print(self.value, end='')
         else:
-            if self.state == self.FLAG:
+            if self.state == FLAG:
                 print('F', end='')
             else:
                 print('?', end='')
