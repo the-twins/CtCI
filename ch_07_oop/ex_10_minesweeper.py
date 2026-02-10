@@ -89,8 +89,8 @@ class PlayingField:
                         self.field[i][j].value += 1
             
     def play(self):
-        row, col, act = self.get_option()
-        while True:            
+        while True: 
+            row, col, act = self.get_option()            
             if act == 1:
                 self.field[row - 1][col - 1].open()
                 self.check_open_square()
@@ -103,7 +103,7 @@ class PlayingField:
                             if self.field[i][j].value == BOMB:
                                 self.field[i][j].open()
                     self.draw_field()
-                    sys.exit(1)
+                    sys.exit(0)
                 if self.field[row - 1][col - 1].value == 0:
                     self.open_square(row - 1, col - 1)                            
             elif act == 2:
@@ -117,9 +117,8 @@ class PlayingField:
                 for i in range(self.row - 1):
                     for j in range(self.col):
                         if self.field[i][j].value != BOMB:
-                                self.field[i][j].open()
+                            self.field[i][j].open()
                 self.draw_field()
-            row, col, act = self.get_option()
                 
     def get_option(self):
         while True:
@@ -130,8 +129,8 @@ class PlayingField:
                             '(press 3), quit(press q): '))
             except ValueError:
                 print('Bye!')
-                sys.exit(1)  
-            if row >= 0 and row <= self.row and col >= 0 and col <= self.col and act in (1, 2, 3, 4):
+                sys.exit(0)  
+            if row >= 1 and row <= self.row and col >= 1 and col <= self.col and act in (1, 2, 3, 4):
                 return (row, col, act)
             else:
                 print('Input error. Try again.')                
@@ -250,17 +249,11 @@ def menu():
     print('a) Beginner(9x9 field, 10 bombs)')
     print('b) Amateur(16x16 field, 40 bombs)')
     print('c) Professional(16x30 field, 99 bombs)')
-    choice = input()
-    while choice:
-        if choice == 'a':
+    while True:
+        choice = input()
+        if choice in ['a', 'b', 'c']:
             return choice
-        elif choice == 'b':
-            return choice
-        elif choice == 'c':
-            return choice
-        else:
-            print('Invalid value. Try again:')
-            choice = input()
+        print('Invalid value. Try again:')
 
 
 if __name__ == '__main__':
